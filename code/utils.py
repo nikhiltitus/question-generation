@@ -20,4 +20,3 @@ def main():
     answer='Saint Bernadette Soubirous'
     print(get_answer_sentence(context,ans_start_index,answer))
 
-main()
