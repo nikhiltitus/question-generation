@@ -24,6 +24,7 @@ class SquadDataProcessor:
                     qans_list.append(qans)
                     print question
                     print answer
+        return qans_list
 
     def read_squad(self,file_location):
         with open(file_location) as squad_file:
