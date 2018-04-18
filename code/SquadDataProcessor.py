@@ -34,8 +34,10 @@ class SquadDataProcessor:
                     answer_sentence=answer_sentence.replace('\n',' ').replace('\r',' ').encode('utf-8').strip()
                     qans=QuestionAnswers(question,answer_sentence,context_json)
                     qans_list.append(qans)
-                    
-        return qans_list
+        offset=int(len(qans_list)*0.8)
+        train_list=qans_list[:offset]
+        val_list=qans_list[offset:]            
+        return (train_list,val_list)
 
     def read_squad(self,file_location):
         with open(file_location) as squad_file:
@@ -46,22 +48,28 @@ def preprocess_and_save(file_location,dump_file_location,remove_nonoverlap=False
     sqad_preprocessor=SquadDataProcessor()
     #checking=open(dump_file_location,'wb')
     squad_data=sqad_preprocessor.read_squad(file_location)
-    data=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=remove_nonoverlap)
+    data=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=remove_nonoverlap)[0]
     with open(dump_file_location,'wb') as dump_file:
         pickle.dump(data,dump_file)
 
 def process_and_save_for_nmt(file_location,dest_folder):
     sqad_preprocessor=SquadDataProcessor()
     squad_data=sqad_preprocessor.read_squad(file_location)
-    qans_list=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=True)
+    train_list,val_list=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=True)
+    # pdb.set_trace()
     with open(dest_folder+'train-src.txt','w') as trainsrc:
         with open(dest_folder+'train-tgt.txt','w') as traintgt:
-            for qans in qans_list:
+            for qans in train_list:
                 trainsrc.write(qans.answer+'\n')
                 traintgt.write(qans.question+'\n')
+    with open(dest_folder+'val-src.txt','w') as valsrc:
+        with open(dest_folder+'val-tgt.txt','w') as valtgt:
+            for qans in val_list:
+                valsrc.write(qans.answer+'\n')
+                valtgt.write(qans.question+'\n')
 
 if __name__=='__main__':
         # preprocess_and_save('../data/squad/train-v1.1.json','../data/squad/qa_dump',
         #                     remove_nonoverlap=True)
         # process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
-        process_and_save_for_nmt('../data/squad/dev-v1.1.json','../out/val/')
+        process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
