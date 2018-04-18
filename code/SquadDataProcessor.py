@@ -35,9 +35,11 @@ class SquadDataProcessor:
                     qans=QuestionAnswers(question,answer_sentence,context_json)
                     qans_list.append(qans)
         offset=int(len(qans_list)*0.8)
+        test_offset=offset+int(len(qans_list)*0.1)
         train_list=qans_list[:offset]
-        val_list=qans_list[offset:]            
-        return (train_list,val_list)
+        val_list=qans_list[offset:test_offset]
+        test_list=qans_list[test_offset:]            
+        return (train_list,val_list,test_list)
 
     def read_squad(self,file_location):
         with open(file_location) as squad_file:
@@ -46,16 +48,15 @@ class SquadDataProcessor:
 
 def preprocess_and_save(file_location,dump_file_location,remove_nonoverlap=False):
     sqad_preprocessor=SquadDataProcessor()
-    #checking=open(dump_file_location,'wb')
     squad_data=sqad_preprocessor.read_squad(file_location)
-    data=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=remove_nonoverlap)[0]
+    train,val,test=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=remove_nonoverlap)
     with open(dump_file_location,'wb') as dump_file:
-        pickle.dump(data,dump_file)
+        pickle.dump((train,val,test),dump_file)
 
 def process_and_save_for_nmt(file_location,dest_folder):
     sqad_preprocessor=SquadDataProcessor()
     squad_data=sqad_preprocessor.read_squad(file_location)
-    train_list,val_list=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=True)
+    train_list,val_list,test_list=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=True)
     # pdb.set_trace()
     with open(dest_folder+'train-src.txt','w') as trainsrc:
         with open(dest_folder+'train-tgt.txt','w') as traintgt:
@@ -67,9 +68,15 @@ def process_and_save_for_nmt(file_location,dest_folder):
             for qans in val_list:
                 valsrc.write(qans.answer+'\n')
                 valtgt.write(qans.question+'\n')
+    with open(dest_folder+'test-src.txt','w') as testsrc:
+        with open(dest_folder+'val-tgt.txt','w')as testgt:
+            for qans in test_list:
+                testsrc.write(qans.answer+'\n')
+                testgt.write(qans.question+'\n')
+    
 
 if __name__=='__main__':
-        # preprocess_and_save('../data/squad/train-v1.1.json','../data/squad/qa_dump',
-        #                     remove_nonoverlap=True)
+         preprocess_and_save('../data/squad/train-v1.1.json','../data/squad/qa_dump',
+                             remove_nonoverlap=True)
         # process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
-        process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
+        #process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
