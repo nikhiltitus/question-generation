@@ -1,0 +1,34 @@
+python preprocess.py -train_src ../question-generation/out/train-src.txt \
+-train_tgt ../question-generation/out/train-tgt.txt \
+-valid_src ../question-generation/out/val-src.txt \
+-valid_tgt ../question-generation/out/val-tgt.txt \
+-src_vocab_size 45000 \
+-tgt_vocab_size 28000 \
+-save_data qg/qg
+
+
+
+./tools/embeddings_to_torch.py  \
+-emb_file_enc "glove_dir/glove.6B.100d.txt" \
+-emb_file_dec "glove_dir/glove.6B.100d.txt" \
+-dict_file "qg/qg.vocab.pt" \
+-output_file "qg/embeddings"
+
+
+python /home/nikhilgeorge/OpenNMT-py/train.py -data=/home/nikhilgeorge/OpenNMT-py/qg/qg \
+-save_model /home/nikhilgeorge/OpenNMT-py/model/qgmodel \
+-epochs 5 \
+-encoder_type brnn \
+-brnn_merge concat \
+-dropout 0.3 \
+-optim sgd \
+-learning_rate 1 \
+-layers 2 \
+-start_decay_at 8 \
+-rnn_size 600 \
+-word_vec_size 100 \
+-pre_word_vecs_enc "/home/nikhilgeorge/OpenNMT-py/qg/embeddings.enc.pt" \
+-pre_word_vecs_dec "/home/nikhilgeorge/OpenNMT-py/qg/embeddings.dec.pt" 
+
+
+
