@@ -69,7 +69,7 @@ def process_and_save_for_nmt(file_location,dest_folder):
                 valsrc.write(qans.answer+'\n')
                 valtgt.write(qans.question+'\n')
     with open(dest_folder+'test-src.txt','w') as testsrc:
-        with open(dest_folder+'val-tgt.txt','w')as testgt:
+        with open(dest_folder+'test-tgt.txt','w')as testgt:
             for qans in test_list:
                 testsrc.write(qans.answer+'\n')
                 testgt.write(qans.question+'\n')
