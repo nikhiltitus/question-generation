@@ -47,22 +47,25 @@ class seq_to_seq():
         pickle_file_location='../data/squad/qa_dump'
         Question_answers=[]
         self.Vocab_size=len(self.word2idx)
-        self.train_question_array_one_hot=np.zeros(shape=(self.train_size,self.Max_time,self.Vocab_size))
+        self.train_question_array_one_hot=np.zeros(shape=(self.train_size,self.Max_time+1,self.Vocab_size))
         with open(self.pickle_file_location) as pickle_file:
             Question_answers=pickle.load(pickle_file)[0]
         for i,qa in enumerate(Question_answers[:self.train_size]):
             tokenized_question=word_tokenize((qa.question))
             self.length_questions.append(len(tokenized_question)+1)
             new_question=[self.word2idx['START']]
-            new_question_one_hot=np.zeros(shape=(self.Max_time,self.Vocab_size))
+            new_question_one_hot=np.zeros(shape=(self.Max_time+1,self.Vocab_size))
+            new_question_one_hot[0,self.word2idx['START']]=1
             for j,word in enumerate(tokenized_question):
-                new_question_one_hot[i,self.word2idx.get(word.lower(),self.word2idx['UNK'])]=1
+                new_question_one_hot[j+1,self.word2idx.get(word.lower(),self.word2idx['UNK'])]=1
                 new_question.append(self.word2idx.get(word.lower(),self.word2idx['UNK']))
-            new_question_one_hot[j,self.word2idx['STOP']]=1
+            j+=1
+            new_question_one_hot[j+1,self.word2idx['STOP']]=1
             new_question.append(self.word2idx['STOP'])
             while len(new_question)<self.Max_time+1:
+                j+=1
                 new_question.append(0)
-                new_question_one_hot[j,self.word2idx['PAD']]=1
+                new_question_one_hot[j+1,self.word2idx['PAD']]=1
             self.train_questions.append(np.array(new_question))
             self.train_question_array[i]=np.array(new_question[:self.Max_time+1])
         
@@ -77,12 +80,13 @@ class seq_to_seq():
                 new_answer.append(0)
             self.train_answers.append(np.array(new_answer))
             self.train_answer_array[i]=np.array(new_answer[:self.Max_time])
-            self.train_question_array_one_hot[i,:,:]=np.array(new_question_one_hot[:self.Max_time,:])
+            self.train_question_array_one_hot[i,:,:]=np.array(new_question_one_hot[:self.Max_time+1,:])
             self.length_answers_array=np.array(self.length_answers)
             self.length_questions_array=np.array(self.length_questions)
+        self.generate_sentences(self.train_question_array_one_hot)
 
     def train_model(self):
-        self.batch_size=25
+        self.batch_size=2
         self.prepare_glove_vector()
         self.prepare_questions_and_answers()
         glove_weights_initializer=tf.constant_initializer(self.weights)
@@ -147,13 +151,13 @@ class seq_to_seq():
                                         self.Max_time),tf.float32))/self.batch_size)
         params=tf.trainable_variables()
         gradients=tf.gradients(training_loss,params)
-        clipped_gradients,_=tf.clip_by_global_norm(gradients,5)
+        #clipped_gradients,_=tf.clip_by_global_norm(gradients,1)
         optimizer=tf.train.AdamOptimizer(learning_rate=1e-2)
         
         sess.run(tf.local_variables_initializer())
         sess.run(tf.global_variables_initializer())  
-        update_step=optimizer.apply_gradients(zip(clipped_gradients,params))
-
+        #update_step=optimizer.apply_gradients(zip(clipped_gradients,params))
+        update_step=optimizer.apply_gradients(zip(gradients,params))
         
         sess.run(tf.global_variables_initializer())
         epoch_number=20
@@ -165,8 +169,8 @@ class seq_to_seq():
                 print self.length_answers_array[:10]
                 feed_dict={
                         encoder_inputs: (self.train_answer_array[:self.batch_size,:]),
-                        decoder_inputs: (self.train_question_array[:self.batch_size,1:]),
-                        target_out: self.train_question_array_one_hot[:self.batch_size,:self.Max_time,:],
+                        decoder_inputs: (self.train_question_array[:self.batch_size,:self.Max_time]),
+                        target_out: self.train_question_array_one_hot[:self.batch_size,1:,:],
                         #target_out:(self.train_question_array[:self.batch_size,:self.Max_time]).T,
                         encoder_lengths: self.length_answers_array[:self.batch_size],
                         decoder_lengths: self.length_questions_array[:self.batch_size]
@@ -175,6 +179,10 @@ class seq_to_seq():
                 print np.mean(loss)
                 sess.run(update_step,feed_dict=feed_dict)
                 sampl_scores=sess.run(scores,feed_dict=feed_dict)
+                #self.generate_sentences(sampl_scores[:5,:,:])
+                #print "EXPECTED"
+                #self.generate_sentences(self.train_question_array_one_hot[:self.batch_size,:self.Max_time,:])
+                print "GOT"
                 self.generate_sentences(sampl_scores[:5,:,:])
 
     
@@ -208,4 +216,6 @@ class seq_to_seq():
 if __name__=="__main__":
     model=seq_to_seq()
     model.train_model()
+    #model.prepare_glove_vector()
+    #model.prepare_questions_and_answers()
 
