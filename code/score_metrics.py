@@ -25,14 +25,28 @@ def bleu_score_estimator(**kwargs):
     input_list=kwargs.get('input_list',None)
     candidate_list=kwargs.get('candidate_list',None)
     verbose=kwargs.get('verbose',False)
+    bleu_scores_iterationwise=[]
     if input_string and candidate_string:
         return compute_bleu(input_string,candidate_string)
     if input_list and candidate_list:
         total_length=len(candidate_list)
-        bleu_scores_iterationwise=[]
+        bleu_total_score_1=0
+        bleu_total_score_2=0
+        bleu_total_score_3=0
+        bleu_total_score_4=0
+        bleu_total_score_default=0
         for i,string in enumerate(input_list):
             if i%100==0 and verbose:
                 print "Bleu Computation :: processed :{0} remaining :{1}".format(i,total_length-i)
+                print "Current Bleu Scores : {0}".format(np.mean(bleu_scores_iterationwise,axis=0))
             bleu_1,bleu_2,bleu_3,bleu_4,bleu_overall=compute_bleu(string,candidate_list[i])
+            bleu_total_score_1+=bleu_1
+            bleu_total_score_2+=bleu_2
+            bleu_total_score_3+=bleu_3
+            bleu_total_score_4+=bleu_4
+            bleu_total_score_default+=bleu_overall
             bleu_scores_iterationwise.append((bleu_1,bleu_2,bleu_3,bleu_4,bleu_overall))
-        return np.mean(bleu_scores_iterationwise,axis=0)
+        return (bleu_total_score_1/total_length,bleu_total_score_2/total_length,
+                bleu_total_score_3/total_length,bleu_total_score_4/total_length,
+                bleu_total_score_default/total_length)
+    
