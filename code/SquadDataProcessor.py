@@ -9,9 +9,10 @@ class SquadDataProcessor:
     def __init__(self):
         question_answer_list=[]
     
-    def process_data(self,squad_json,remove_nonoverlap=False):
+    def process_data(self,squad_json,remove_nonoverlap=False,**kwargs):
         qans_list=[]
         dataset_json=squad_json['data']
+        encode_format=kwargs.get('encoding_format','utf-8')
         i=0
         for paragraph in dataset_json:
             paragraph_json=paragraph['paragraphs']
@@ -30,8 +31,10 @@ class SquadDataProcessor:
                         #print question
                         #print answer_sentence,answer['text']
                         continue
-                    question=question.replace('\n',' ').replace('\r',' ').encode('utf-8').strip()
-                    answer_sentence=answer_sentence.replace('\n',' ').replace('\r',' ').encode('utf-8').strip()
+                    #question=question.replace('\n',' ').replace('\r',' ').encode(encode_format).strip()
+                    #answer_sentence=answer_sentence.replace('\n',' ').replace('\r',' ').encode(encode_format).strip()
+                    question=question.replace('\n',' ').replace('\r',' ').strip()
+                    answer_sentence=answer_sentence.replace('\n',' ').replace('\r',' ').strip()
                     qans=QuestionAnswers(question,answer_sentence,context_json)
                     qans_list.append(qans)
         offset=int(len(qans_list)*0.8)
@@ -49,7 +52,8 @@ class SquadDataProcessor:
 def preprocess_and_save(file_location,dump_file_location,remove_nonoverlap=False):
     sqad_preprocessor=SquadDataProcessor()
     squad_data=sqad_preprocessor.read_squad(file_location)
-    train,val,test=sqad_preprocessor.process_data(squad_data,remove_nonoverlap=remove_nonoverlap)
+    train,val,test=sqad_preprocessor.process_data(squad_data,
+                            remove_nonoverlap=remove_nonoverlap,encoding_format='ascii')
     with open(dump_file_location,'wb') as dump_file:
         pickle.dump((train,val,test),dump_file)
 
