@@ -2,8 +2,10 @@ from QuestionAnswers import QuestionAnswers
 import json
 import pdb
 import pickle
-from utils import get_answer_sentence,check_overlap
-
+import numpy as np
+from utils import get_answer_sentence,check_overlap,sentence_selection_processing
+from Paragraph import squad_data
+import utils as utils
 
 class SquadDataProcessor:
     def __init__(self):
@@ -22,20 +24,14 @@ class SquadDataProcessor:
                 for quesans in qas_json:
                     question=quesans['question']
                     answer=quesans['answers'][0]
-                    # pdb.set_trace()
                     answer_sentence=get_answer_sentence(context_json,answer['answer_start'],answer['text'])
                     if i%1000==0:
                         print i
                     i+=1
                     if remove_nonoverlap and check_overlap(answer_sentence,question)==0:
-                        #print question
-                        #print answer_sentence,answer['text']
                         continue
                     question=question.replace('\n',' ').replace('\r',' ').encode(encode_format).strip()
                     answer_sentence=answer_sentence.replace('\n',' ').replace('\r',' ').encode(encode_format).strip()
-                    # question=question.replace('\n',' ').replace('\r',' ').strip()
-                    # answer_sentence=answer_sentence.replace('\n',' ').replace('\r',' ').strip()
-                    qans=QuestionAnswers(question,answer_sentence,context_json)
                     qans_list.append(qans)
         offset=int(len(qans_list)*0.8)
         test_offset=offset+int(len(qans_list)*0.1)
@@ -43,6 +39,41 @@ class SquadDataProcessor:
         val_list=qans_list[offset:test_offset]
         test_list=qans_list[test_offset:]            
         return (train_list,val_list,test_list)
+
+    def important_text_selection(self,squad_json):
+        squad_data_return=squad_data()
+        dataset_json=squad_json['data']
+        i=0
+        max_length_para_length=0
+        for paragraph in dataset_json:
+            paragraph_json=paragraph['paragraphs']
+            for context in paragraph_json:
+                context_json=context['context']
+                tokenized_context=utils.tokenize_para(context_json)
+                para_sent_lengths=utils.find_para_lengths(context_json)
+                qas_json=context['qas']
+                
+                if len(para_sent_lengths)>max_length_para_length:
+                    max_length_para_length=len(para_sent_lengths)
+
+                question_worthiness=np.zeros((len(qas_json),len(para_sent_lengths)),dtype=np.int32)
+                for j,quesans in enumerate(qas_json):
+                    i+=1
+                    if i%1000==0:
+                        print i
+                    question=quesans['question']
+                    answer=quesans['answers'][0]
+                    answer_sentence=get_answer_sentence(context_json,answer['answer_start'],answer['text'])
+                    if  check_overlap(answer_sentence,question)==0:
+                        continue
+                    question_worthiness[j]=sentence_selection_processing(context_json,
+                                                    answer['answer_start'],
+                                                    answer['text'])
+                worthiness=np.array((np.sum(question_worthiness,axis=0)>0)*1,dtype=np.int32)
+                squad_data_return.add_paragrap_information(tokenized_context,
+                                                        para_sent_lengths,worthiness)
+        squad_data.max_par_length=max_length_para_length
+        return squad_data_return
 
     def read_squad(self,file_location):
         with open(file_location) as squad_file:
@@ -56,6 +87,13 @@ def preprocess_and_save(file_location,dump_file_location,remove_nonoverlap=False
                             remove_nonoverlap=remove_nonoverlap,encoding_format='utf-8')
     with open(dump_file_location,'wb') as dump_file:
         pickle.dump((train,val,test),dump_file)
+
+def preprocess_and_save_text_selection(file_location,dump_file_location,remove_nonoverlap=False):
+    sqad_preprocessor=SquadDataProcessor()
+    squad_data=sqad_preprocessor.read_squad(file_location)
+    text_selection_data=sqad_preprocessor.important_text_selection(squad_data)
+    with open(dump_file_location,'wb') as dump_file:
+        pickle.dump(text_selection_data,dump_file)
 
 def process_and_save_for_nmt(file_location,dest_folder):
     sqad_preprocessor=SquadDataProcessor()
@@ -77,10 +115,12 @@ def process_and_save_for_nmt(file_location,dest_folder):
             for qans in test_list:
                 testsrc.write(qans.answer+'\n')
                 testgt.write(qans.question+'\n')
-    
+
 
 if __name__=='__main__':
         #  preprocess_and_save('../data/squad/train-v1.1.json','../data/squad/qa_dump',
         #                      remove_nonoverlap=True)
-        process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
+        preprocess_and_save_text_selection('../data/squad/train-v1.1.json','../data/squad/text_sel_dump',
+                              remove_nonoverlap=True)
+        #process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
         #process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')

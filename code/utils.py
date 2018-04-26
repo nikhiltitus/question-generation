@@ -1,4 +1,6 @@
 import nltk
+import numpy as np
+
 def get_answer_sentence(context,ans_start_index,answer):
     sentence_list=[]
     running_count=0
@@ -12,6 +14,33 @@ def get_answer_sentence(context,ans_start_index,answer):
             break
         running_count=current_count
     return ' '.join(sentence_list)
+
+def sentence_selection_processing(context,ans_start_index,answer):
+    sentence_list=[]
+    running_count=0
+    end_index=ans_start_index+len(answer)
+    tok_context=nltk.sent_tokenize(context)
+    question_worthiness=[]
+    word_count=0
+    for i in range(0,len(tok_context)):
+        current_count=running_count+len(tok_context[i])
+        if current_count >= ans_start_index and current_count<end_index:
+            sentence_list.append(tok_context[i])
+            question_worthiness.append(1)
+        else:
+            question_worthiness.append(0)
+        running_count=current_count
+    return np.array(question_worthiness)
+
+def find_para_lengths(context):
+    para_lengths=[]
+    tok_context=nltk.sent_tokenize(context)
+    for i,sent in enumerate(tok_context):
+        para_lengths.append(nltk.word_tokenize(sent))
+    return para_lengths
+
+def tokenize_para(context):
+    return nltk.word_tokenize(context)
 
 def check_overlap(sentence_1,sentence_2):
     bow_sent1=set(sentence_1.split())
