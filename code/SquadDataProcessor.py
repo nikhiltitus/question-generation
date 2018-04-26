@@ -80,7 +80,7 @@ def process_and_save_for_nmt(file_location,dest_folder):
     
 
 if __name__=='__main__':
-         preprocess_and_save('../data/squad/train-v1.1.json','../data/squad/qa_dump',
-                             remove_nonoverlap=True)
-        # process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
+        #  preprocess_and_save('../data/squad/train-v1.1.json','../data/squad/qa_dump',
+        #                      remove_nonoverlap=True)
+        process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
         #process_and_save_for_nmt('../data/squad/train-v1.1.json','../out/')
