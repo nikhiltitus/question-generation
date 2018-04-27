@@ -15,18 +15,21 @@ class ImpSentenceModel(nn.Module):
         self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
         self.lstm=nn.LSTM(embedding_dim,hidden_dim)
         self.hidden=self.init_hidden(mini_batch_size)
+        self.linear=nn.Linear(hidden_dim,2)
     
     def init_hidden(self,mini_batch_length):
         self.hidden=(autograd.Variable(torch.zeros(1, mini_batch_length, self.hidden_dim)),autograd.Variable(torch.zeros(1, mini_batch_length, self.hidden_dim)))
 
     def forward(self,paragraph_variable,sentence_length_list,paragh_length_list,max_no_lines):
         pdb.set_trace()
+        no_of_sentence=0
         embedding=self.embedding_layer(paragraph_variable)
         line_embedding=autograd.Variable(torch.zeros(self.mini_batch_size,max_no_lines,self.embedding_dim))
         for i in range(0,self.mini_batch_size):
             counter=0
             previous=0
             for j in sentence_length_list[i]:
+                no_of_sentence+=1
                 line_embedding[i,counter]=embedding[i,previous: previous + j].sum(dim=0)
                 counter+=1
                 previous+=j
@@ -34,6 +37,14 @@ class ImpSentenceModel(nn.Module):
         line_embedding=pack_padded_sequence(line_embedding,paragh_length_list)
         packed_lstm_out,self.hidden=self.lstm(line_embedding,self.hidden)
         lstm_out, _ = pad_packed_sequence(packed_lstm_out)
+        lstm_out=lstm_out.transpose(0,1)
+        sentence_lstm=autograd.Variable(torch.zeros(no_of_sentence,lstm_out.shape[2]))
+        counter=0
+        for i in range(0,self.mini_batch_size):
+            for j,element in enumerate(sentence_length_list[i]):
+                sentence_lstm[counter]=lstm_out[i,j]
+                counter+=1
+        output=self.linear(sentence_lstm)
         pdb.set_trace()
 
 def main():
