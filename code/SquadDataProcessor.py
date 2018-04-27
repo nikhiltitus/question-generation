@@ -56,9 +56,11 @@ class SquadDataProcessor:
                 
                 if len(tokenized_context)>max_para_length:
                     max_para_length=len(tokenized_context)
+                    print max_para_length
 
                 if len(para_sent_lengths)>max_length_para_length:
                     max_length_para_length=len(para_sent_lengths)
+                    print max_length_para_length
 
                 question_worthiness=np.zeros((len(qas_json),len(para_sent_lengths)),dtype=np.int32)
                 for j,quesans in enumerate(qas_json):
@@ -77,8 +79,9 @@ class SquadDataProcessor:
                 squad_data_return.add_paragrap_information(tokenized_context,
                                                         para_sent_lengths,worthiness)
                 
-        squad_data.max_par_length=max_length_para_length
-        squad_data.max_par_length=max_para_length
+        squad_data_return.max_sent_length=max_length_para_length
+        squad_data_return.max_par_length=max_para_length
+        
         return squad_data_return
 
     def read_squad(self,file_location):
