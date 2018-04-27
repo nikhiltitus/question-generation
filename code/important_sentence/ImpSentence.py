@@ -3,8 +3,56 @@ import pdb
 import torch
 import torch.autograd as autograd
 import torch.optim as optim
-from Paragraph import Paragraph
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+import sys
+import pickle
+
+sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
+from Paragraph import squad_data
+
+batch_count=0
+processed_data=None
+data_size=0
+def retrieve_data(file_location):
+    global processed_data
+    with open(file_location) as file:
+        processed_data=pickle.load(file)
+
+def create_batches(batch_size):
+    global processed_data,batch_count,data_size
+    if not processed_data:
+        print "Retrieving"
+        retrieve_data('../../data/squad/text_sel_dump')
+        data_size=len(processed_data.data)
+    max_count=data_size//batch_size
+    if not batch_count<max_count:
+        batch_count=0
+    
+    # we take a batch of data
+    data_batch=processed_data.data[batch_count*batch_size:(batch_count+1)*batch_size]
+    sorted_data_batch=[]
+    for i,para in enumerate(data_batch):
+        
+        sorted_data_batch.append((para.paragraph,para.sentence_lengths,
+                            para.question_worthiness,len(para.sentence_lengths)))
+    sorted_data_batch=sorted(sorted_data_batch,key=lambda tup:-tup[3])
+    paragraph_list=[]
+    para_sentence_lengths=[]
+    para_question_worthiness=[]
+    paragraph_line_length=[]
+    for element in sorted_data_batch:
+        para_element=element[0]
+        while len(para_element)<processed_data.max_par_length:
+            para_element.append(0)
+        paragraph_list.append(element[0])
+        para_sentence_lengths.append(element[1])
+        para_question_worthiness.append(element[2])
+        paragraph_line_length.append(element[3])
+    print "MAX lengths : ",processed_data.max_par_length,processed_data.max_sent_length
+    return paragraph_list,para_sentence_lengths,para_question_worthiness,paragraph_line_length
+        
+
+
 
 #Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
 class ImpSentenceModel(nn.Module):
@@ -51,6 +99,10 @@ class ImpSentenceModel(nn.Module):
         # pdb.set_trace()
 
 def main():
+    data=create_batches(15)
+    for element in data:
+        print element
+
     loss_function=nn.CrossEntropyLoss()
     target=torch.LongTensor([1,0,1,0,1,1])
     impModel=ImpSentenceModel(3,50,20,128,2)

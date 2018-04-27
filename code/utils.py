@@ -22,13 +22,17 @@ def sentence_selection_processing(context,ans_start_index,answer):
     tok_context=nltk.sent_tokenize(context)
     question_worthiness=[]
     word_count=0
+    keep_appending=True
     for i in range(0,len(tok_context)):
         current_count=running_count+len(tok_context[i])
-        if current_count >= ans_start_index and current_count<end_index:
+        if current_count >= ans_start_index and keep_appending:
             sentence_list.append(tok_context[i])
             question_worthiness.append(1)
         else:
             question_worthiness.append(0)
+        if current_count>end_index: 
+                keep_appending=False
+        
         running_count=current_count
     return np.array(question_worthiness)
 

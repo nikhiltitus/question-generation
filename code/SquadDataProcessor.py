@@ -70,8 +70,8 @@ class SquadDataProcessor:
                     question=quesans['question']
                     answer=quesans['answers'][0]
                     answer_sentence=get_answer_sentence(context_json,answer['answer_start'],answer['text'])
-                    if  check_overlap(answer_sentence,question)==0:
-                        continue
+                    #if  check_overlap(answer_sentence,question)==0:
+                    #    continue
                     question_worthiness[j]=sentence_selection_processing(context_json,
                                                     answer['answer_start'],
                                                     answer['text'])
