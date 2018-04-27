@@ -45,6 +45,7 @@ class SquadDataProcessor:
         dataset_json=squad_json['data']
         i=0
         max_length_para_length=0
+        max_para_length=0
         for paragraph in dataset_json:
             paragraph_json=paragraph['paragraphs']
             for context in paragraph_json:
@@ -53,8 +54,13 @@ class SquadDataProcessor:
                 para_sent_lengths=utils.find_para_lengths(context_json)
                 qas_json=context['qas']
                 
+                if len(tokenized_context)>max_para_length:
+                    max_para_length=len(tokenized_context)
+                    print max_para_length
+
                 if len(para_sent_lengths)>max_length_para_length:
                     max_length_para_length=len(para_sent_lengths)
+                    print max_length_para_length
 
                 question_worthiness=np.zeros((len(qas_json),len(para_sent_lengths)),dtype=np.int32)
                 for j,quesans in enumerate(qas_json):
@@ -72,7 +78,10 @@ class SquadDataProcessor:
                 worthiness=np.array((np.sum(question_worthiness,axis=0)>0)*1,dtype=np.int32)
                 squad_data_return.add_paragrap_information(tokenized_context,
                                                         para_sent_lengths,worthiness)
-        squad_data.max_par_length=max_length_para_length
+                
+        squad_data_return.max_sent_length=max_length_para_length
+        squad_data_return.max_par_length=max_para_length
+        
         return squad_data_return
 
     def read_squad(self,file_location):
