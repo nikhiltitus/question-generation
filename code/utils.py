@@ -36,7 +36,7 @@ def find_para_lengths(context):
     para_lengths=[]
     tok_context=nltk.sent_tokenize(context)
     for i,sent in enumerate(tok_context):
-        para_lengths.append(nltk.word_tokenize(sent))
+        para_lengths.append(len(nltk.word_tokenize(sent)))
     return para_lengths
 
 def tokenize_para(context):
