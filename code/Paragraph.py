@@ -15,11 +15,17 @@ class Paragraph():
 
 class squad_data():
     def __init__(self):
+        # Length of longest paragraph in number of lines
         self.max_sent_length=0
+        # Length of longest paragraph in number of words
         self.max_par_length=0
+        #data - list of paragraphs
         self.data=[]#list of paragraphs
         self.glove_file_location='../data/glove.6B/glove.6B.300d.txt'
+        #weights for glove vector
+        self.weights=None
         self.prepare_glove_vector()
+
 
     def prepare_glove_vector(self):
         self.word2idx={'PAD':0,'STOP':1,'START':2,'UNK':3}
