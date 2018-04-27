@@ -3,22 +3,54 @@
 # para=sent_tokenize(inp)
 # for i in range(0,len(para)):
 #     para[i]=word_tokenize(para[i])
+import numpy as np
 
-
-class Paragraph:
+class Paragraph():
     def __init__(self):
-        self.sentence_list=[]
-        self.sentence_list_ids=[]
-
-    def set_sentence_list(self,sentence_list,vocab_map):
-        self.sentence_list=sentence_list
-        self.sentence_list_ids=self.get_as_ids(vocab_map)
+        self.paragraph=[]
+        self.sentence_lengths=[]
+        self.question_worthiness=[]
     
-    def get_as_ids(self,vocab_map):
-        paragraph_ids=[]
-        for sentence in self.sentence_list:
-            sentence_ids=[]
-            for word in sentence:
-                sentence_ids.append(vocab_map[word])
-            paragraph_ids.append(sentence_ids)
-        return paragraph_ids
+    
+
+class squad_data():
+    def __init__(self):
+        self.max_sent_length=0
+        self.max_par_length=0
+        self.data=[]#list of paragraphs
+        self.glove_file_location='../data/glove.6B/glove.6B.300d.txt'
+        self.prepare_glove_vector()
+
+    def prepare_glove_vector(self):
+        self.word2idx={'PAD':0,'STOP':1,'START':2,'UNK':3}
+        self.index2word={0:'PAD',1:'STOP',2:'START',3:'UNK'}
+        self.weights=[np.random.randn(300) for _ in range(4)]
+        with open(self.glove_file_location) as glove_file:
+            i=0
+            for index,line in enumerate(glove_file):
+                line_split=line.split()
+                word=line_split[0]
+                word_weights=np.asarray(line_split[1:],dtype=np.float32)
+                self.weights.append(word_weights)
+                self.word2idx[word.lower()]=index+4
+                self.index2word[index+4]=word.lower()
+                if index>48000:
+                    break
+        self.weights=np.asarray(self.weights,dtype=np.float32)
+    
+    
+    def add_paragrap_information(self,para_tokenized,para_sent_lengths,question_worthiness):
+        para=Paragraph()
+        para.paragraph=self.convert_to_index(para_tokenized)
+        para.sentence_lengths=para_sent_lengths
+        para.question_worthiness=question_worthiness
+        self.data.append(para)
+
+    def convert_to_index(self,list_of_words):
+        return_list=[]
+        for word in list_of_words:
+            return_list.append(self.word2idx.get(word.lower(),self.word2idx['UNK']))
+        return return_list
+
+
+        
