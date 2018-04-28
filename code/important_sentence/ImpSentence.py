@@ -194,7 +194,7 @@ def main3(enable_cuda=False):
         if (len(p_list) !=128 ):
             print 'Batch size issue'
             continue
-        if batch_count == 2 and len(running_loss) != 0:
+        if batch_count == 1 and len(running_loss) != 0:
             torch.save(impModel, Model_save_path)
             epoch_count+=1
             print 'No of epoch: ',epoch_count
