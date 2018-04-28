@@ -24,7 +24,7 @@ def create_batches(batch_size,mode='train'):
     if not processed_data:
         print "Retrieving"
         retrieve_data('../../data/squad/text_sel_dump')
-        data_size=len(processed_data.data)
+        data_size=len(processed_data.train_data)
     max_count=data_size//batch_size
     if not batch_count<max_count:
         batch_count=0
