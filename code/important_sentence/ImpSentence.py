@@ -6,6 +6,8 @@ import torch.optim as optim
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import sys
 import pickle
+import numpy as np
+import torch
 #Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
 #sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
 sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
@@ -144,7 +146,29 @@ def main2():
     p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
     pdb.set_trace()
 
-def main3():
+def get_accuracy(out_scores,target_scores):
+    return np.mean(np.argmax(out_scores.data.cpu().numpy(),axis=1) == target_scores.data.numpy())
+
+def get_val_accuracy(model,enable_cuda=False):
+    val_p_list,val_sentence_lens,val_ques_worthy,val_n_line=create_batches(128,'val')
+    if enable_cuda:
+        paragraph_input=autograd.Variable(torch.cuda.LongTensor(val_p_list))
+    else:
+        paragraph_input=autograd.Variable(torch.LongTensor(val_p_list))
+    # paragraph_input=autograd.Variable(torch.LongTensor(p_list))
+    if enable_cuda:
+        target_scores=autograd.Variable(torch.cuda.LongTensor(val_ques_worthy))
+    else:
+        target_scores=autograd.Variable(torch.LongTensor(val_ques_worthy))
+    model.zero_grad()
+    model.init_hidden()
+    out_scores=model(paragraph_input,val_sentence_lens,val_n_line)
+    accuracy=get_accuracy(out_scores,target_scores)
+    return out_scores
+
+def main3(enable_cuda=False):
+    running_accuracy=[]
+    running_loss=[]
     no_of_epochs=10
     epoch_count=0
     loss_function=nn.CrossEntropyLoss()
@@ -154,24 +178,40 @@ def main3():
     optimizer = optim.SGD(impModel.parameters(), lr=0.1)
     while True:
         print batch_count
-        if batch_count == 1:
+        if batch_count == 2 and len(running_loss) != 0:
+            torch.save(impModel, 'model.pt')
             epoch_count+=1
             print 'No of epoch: ',epoch_count
+            print 'Running training accuracy %d'%(sum(running_accuracy)/len(running_accuracy))
+            print 'Running Loss %d'%(sum(running_loss)/len(running_loss))
+            print 'Validation accuracy: %d'%(get_val_accuracy(impModel))
+            running_accuracy=[]
+            running_loss=[]
         if epoch_count == no_of_epochs:
             print 'Max epochs reached'
             break
         print ('Batch count is: %d of %d'%(batch_count,data_size//128))
-        paragraph_input=autograd.Variable(torch.LongTensor(p_list))
-        target_scores=autograd.Variable(torch.LongTensor(ques_worthy))
+        if enable_cuda:
+            paragraph_input=autograd.Variable(torch.cuda.LongTensor(p_list))
+        else:
+            paragraph_input=autograd.Variable(torch.LongTensor(p_list))
+        # paragraph_input=autograd.Variable(torch.LongTensor(p_list))
+        if enable_cuda:
+            target_scores=autograd.Variable(torch.cuda.LongTensor(ques_worthy))
+        else:
+            target_scores=autograd.Variable(torch.LongTensor(ques_worthy))
         impModel.zero_grad()
         impModel.init_hidden()
         out_scores=impModel(paragraph_input,sentence_lens,n_line)
-        pdb.set_trace()
+        accuracy=get_accuracy(out_scores,target_scores)
+        # pdb.set_trace()
         loss=loss_function(out_scores, autograd.Variable(target_scores))
         loss.backward()
         optimizer.step()
         p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
         print 'Loss: ',loss.data
+        print 'accuracy: ',accuracy
+        running_accuracy.append(accuracy)
 
 def main4():
     global batch_count
@@ -189,4 +229,4 @@ def main4():
         print batch_count
         prev_count+=1
 
-main4()
+main3(False)
