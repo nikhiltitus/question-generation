@@ -15,9 +15,14 @@ sys.path.append( '../')
 
 from Paragraph import squad_data
 
+#Global variables
 batch_count=0
 processed_data=None
 data_size=0
+input_file_path=None
+Model_save_path=None
+
+
 def retrieve_data(file_location):
     global processed_data
     with open(file_location) as file:
@@ -27,7 +32,7 @@ def create_batches(batch_size,mode='train'):
     global processed_data,batch_count,data_size
     if not processed_data:
         print "Retrieving"
-        retrieve_data('../../data/squad/text_sel_dump')
+        retrieve_data(input_file_path)
         data_size=len(processed_data.train_data)
     max_count=data_size//batch_size
     if not batch_count<max_count:
@@ -172,6 +177,9 @@ def get_val_accuracy(model,enable_cuda=False):
     return accuracy
 
 def main3(enable_cuda=False):
+    global input_file_path,Model_save_path
+    input_file_path=sys.argv[1]
+    Model_save_path=sys.argv[2]
     running_accuracy=[]
     running_loss=[]
     no_of_epochs=10
@@ -187,7 +195,7 @@ def main3(enable_cuda=False):
             print 'Batch size issue'
             continue
         if batch_count == 2 and len(running_loss) != 0:
-            torch.save(impModel, 'model.pt')
+            torch.save(impModel, Model_save_path)
             epoch_count+=1
             print 'No of epoch: ',epoch_count
             print 'Running training accuracy %f'%(sum(running_accuracy)/len(running_accuracy))
