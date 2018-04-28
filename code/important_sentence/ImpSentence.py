@@ -21,6 +21,7 @@ processed_data=None
 data_size=0
 input_file_path=None
 Model_save_path=None
+enable_cuda=None
 
 
 def retrieve_data(file_location):
@@ -101,9 +102,13 @@ class ImpSentenceModel(nn.Module):
 
     def forward(self,paragraph_variable,sentence_length_list,paragh_length_list):
         # pdb.set_trace()
+        global enable_cuda
         no_of_sentence=0
         embedding=self.embedding_layer(paragraph_variable)
-        line_embedding=autograd.Variable(torch.zeros(self.mini_batch_size,self.max_no_lines,self.embedding_dim))
+        if enable_cuda:
+            line_embedding=autograd.Variable(torch.cuda.FloatTensor(self.mini_batch_size,self.max_no_lines,self.embedding_dim).fill_(0))
+        else:
+            line_embedding=autograd.Variable(torch.zeros(self.mini_batch_size,self.max_no_lines,self.embedding_dim))
         for i in range(0,self.mini_batch_size):
             counter=0
             previous=0
@@ -117,7 +122,10 @@ class ImpSentenceModel(nn.Module):
         packed_lstm_out,self.hidden=self.lstm(line_embedding,self.hidden)
         lstm_out, _ = pad_packed_sequence(packed_lstm_out)
         lstm_out=lstm_out.transpose(0,1)
-        sentence_lstm=autograd.Variable(torch.zeros(no_of_sentence,lstm_out.shape[2]))
+        if enable_cuda:
+            sentence_lstm=autograd.Variable(torch.cuda.FloatTensor(no_of_sentence,lstm_out.shape[2]).fill_(0))
+        else:
+            sentence_lstm=autograd.Variable(torch.zeros(no_of_sentence,lstm_out.shape[2]))
         counter=0
         for i in range(0,self.mini_batch_size):
             for j,element in enumerate(sentence_length_list[i]):
@@ -159,7 +167,8 @@ def main2():
 def get_accuracy(out_scores,target_scores):
     return np.mean(np.argmax(out_scores.data.cpu().numpy(),axis=1) == target_scores.data.numpy())
 
-def get_val_accuracy(model,enable_cuda=False):
+def get_val_accuracy(model):
+    global enable_cuda
     val_p_list,val_sentence_lens,val_ques_worthy,val_n_line=create_batches(128,'val')
     if enable_cuda:
         paragraph_input=autograd.Variable(torch.cuda.LongTensor(val_p_list))
@@ -176,8 +185,9 @@ def get_val_accuracy(model,enable_cuda=False):
     accuracy=get_accuracy(out_scores,target_scores)
     return accuracy
 
-def main3(enable_cuda=False):
-    global input_file_path,Model_save_path
+def main3():
+    global input_file_path,Model_save_path,enable_cuda
+    enable_cuda=sys.argv[3]
     input_file_path=sys.argv[1]
     Model_save_path=sys.argv[2]
     running_accuracy=[]
@@ -249,4 +259,4 @@ def main4():
         prev_count+=1
 
 # main4()
-main3(False)
+main3()
