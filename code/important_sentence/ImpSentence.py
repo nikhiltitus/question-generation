@@ -166,9 +166,8 @@ def get_val_accuracy(model,enable_cuda=False):
     model.zero_grad()
     model.init_hidden()
     out_scores=model(paragraph_input,val_sentence_lens,val_n_line)
-    pdb.set_trace()
     accuracy=get_accuracy(out_scores,target_scores)
-    return out_scores
+    return accuracy
 
 def main3(enable_cuda=False):
     running_accuracy=[]
@@ -182,13 +181,18 @@ def main3(enable_cuda=False):
     optimizer = optim.SGD(impModel.parameters(), lr=0.1)
     while True:
         print batch_count
+        if (len(p_list) !=128 ):
+            print 'Batch size issue'
+            continue
         if batch_count == 2 and len(running_loss) != 0:
             torch.save(impModel, 'model.pt')
             epoch_count+=1
             print 'No of epoch: ',epoch_count
             print 'Running training accuracy %f'%(sum(running_accuracy)/len(running_accuracy))
             print 'Running Loss %f'%(sum(running_loss)/len(running_loss))
-            print 'Validation accuracy: %d'%(get_val_accuracy(impModel))
+            val_acc=get_val_accuracy(impModel)
+            # pdb.set_trace()
+            print 'Validation accuracy: %f'%(val_acc)
             running_accuracy=[]
             running_loss=[]
         if epoch_count == no_of_epochs:
@@ -234,5 +238,5 @@ def main4():
         print batch_count
         prev_count+=1
 
-main4()
-#main3(False)
+# main4()
+main3(False)
