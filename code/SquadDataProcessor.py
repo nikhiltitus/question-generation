@@ -81,7 +81,8 @@ class SquadDataProcessor:
                 
         squad_data_return.max_sent_length=max_length_para_length
         squad_data_return.max_par_length=max_para_length
-        
+
+        squad_data_return.create_train_val_test()
         return squad_data_return
 
     def read_squad(self,file_location):

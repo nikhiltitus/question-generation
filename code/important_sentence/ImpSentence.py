@@ -9,7 +9,8 @@ import pickle
 import numpy as np
 import torch
 #Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
-sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
+#sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
+sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
 from Paragraph import squad_data
 
 batch_count=0
@@ -20,7 +21,7 @@ def retrieve_data(file_location):
     with open(file_location) as file:
         processed_data=pickle.load(file)
 
-def create_batches(batch_size):
+def create_batches(batch_size,mode='train'):
     global processed_data,batch_count,data_size
     if not processed_data:
         print "Retrieving"
@@ -31,12 +32,20 @@ def create_batches(batch_size):
         batch_count=0
     
     # we take a batch of data
-    data_batch=processed_data.data[batch_count*batch_size:(batch_count+1)*batch_size]
+    if mode=='train':
+        return_data=processed_data.train_data[batch_count*batch_size:(batch_count+1)*batch_size]
+    elif mode=='val':
+        return_data=processed_data.val_data
+    else:
+        return_data=processed_data.test_data
+
+    data_batch=return_data
     sorted_data_batch=[]
     for i,para in enumerate(data_batch):
         
         sorted_data_batch.append((para.paragraph,para.sentence_lengths,
                             para.question_worthiness,len(para.sentence_lengths)))
+
     sorted_data_batch=sorted(sorted_data_batch,key=lambda tup:-tup[3])
     paragraph_list=[]
     para_sentence_lengths=[]
@@ -51,7 +60,8 @@ def create_batches(batch_size):
         para_question_worthiness+=list(element[2])
         paragraph_line_length.append(element[3])
     print "MAX lengths : ",processed_data.max_par_length,processed_data.max_sent_length
-    batch_count+=1
+    if mode=='train':
+        batch_count+=1
     return paragraph_list,para_sentence_lengths,para_question_worthiness,paragraph_line_length
         
 
@@ -130,8 +140,29 @@ def main2():
     p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
     pdb.set_trace()
 
+def get_accuracy(out_scores,target_scores):
+    return np.mean(np.argmax(out_scores.data.cpu().numpy(),axis=1) == target_scores.data.numpy())
+
+def get_val_accuracy(model,enable_cuda=False):
+    val_p_list,val_sentence_lens,val_ques_worthy,val_n_line=create_batches(128,'val')
+    if enable_cuda:
+        paragraph_input=autograd.Variable(torch.cuda.LongTensor(val_p_list))
+    else:
+        paragraph_input=autograd.Variable(torch.LongTensor(val_p_list))
+    # paragraph_input=autograd.Variable(torch.LongTensor(p_list))
+    if enable_cuda:
+        target_scores=autograd.Variable(torch.cuda.LongTensor(val_ques_worthy))
+    else:
+        target_scores=autograd.Variable(torch.LongTensor(val_ques_worthy))
+    model.zero_grad()
+    model.init_hidden()
+    out_scores=model(paragraph_input,val_sentence_lens,val_n_line)
+    accuracy=get_accuracy(out_scores,target_scores)
+    return out_scores
+
 def main3(enable_cuda=False):
     running_accuracy=[]
+    running_loss=[]
     no_of_epochs=10
     epoch_count=0
     loss_function=nn.CrossEntropyLoss()
@@ -141,12 +172,15 @@ def main3(enable_cuda=False):
     optimizer = optim.SGD(impModel.parameters(), lr=0.1)
     while True:
         print batch_count
-        if batch_count == 1:
+        if batch_count == 2 and len(running_loss) != 0:
             torch.save(impModel, 'model.pt')
             epoch_count+=1
             print 'No of epoch: ',epoch_count
-            print 'Running training accuracy %d'%(sum(running_accuracy)/(data_size//128))
+            print 'Running training accuracy %d'%(sum(running_accuracy)/len(running_accuracy))
+            print 'Running Loss %d'%(sum(running_loss)/len(running_loss))
+            print 'Validation accuracy: %d'%(get_val_accuracy(impModel))
             running_accuracy=[]
+            running_loss=[]
         if epoch_count == no_of_epochs:
             print 'Max epochs reached'
             break
@@ -163,7 +197,7 @@ def main3(enable_cuda=False):
         impModel.zero_grad()
         impModel.init_hidden()
         out_scores=impModel(paragraph_input,sentence_lens,n_line)
-        accuracy=np.mean(np.argmax(out_scores.data.cpu().numpy(),axis=1) == target_scores.data.numpy())
+        accuracy=get_accuracy(out_scores,target_scores)
         # pdb.set_trace()
         loss=loss_function(out_scores, autograd.Variable(target_scores))
         loss.backward()
@@ -172,5 +206,14 @@ def main3(enable_cuda=False):
         print 'Loss: ',loss.data
         print 'accuracy: ',accuracy
         running_accuracy.append(accuracy)
+
+def main4():
+    print len(create_batches(100,'train')[0])
+    print len(create_batches(100,'test')[0])
+    print len(create_batches(100,'val')[0])
+    print len(processed_data.data)
+    print len(processed_data.train_data)
+    print len(processed_data.test_data)
+    print len(processed_data.val_data)
 
 main3(False)

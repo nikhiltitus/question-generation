@@ -58,5 +58,11 @@ class squad_data():
             return_list.append(self.word2idx.get(word.lower(),self.word2idx['UNK']))
         return return_list
 
+    def create_train_val_test(self):
+        len_para=len(self.data)
+        marker=int(0.1*len_para)
+        self.train_data=self.data[:8*marker]
+        self.val_data=self.data[8*marker:9*marker]
+        self.test_data=self.data[9*marker:]
 
         
