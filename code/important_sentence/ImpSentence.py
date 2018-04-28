@@ -200,7 +200,7 @@ def main3(enable_cuda=False):
             print 'No of epoch: ',epoch_count
             print 'Running training accuracy %f'%(sum(running_accuracy)/len(running_accuracy))
             print 'Running Loss %f'%(sum(running_loss)/len(running_loss))
-            val_acc=get_val_accuracy(impModel)
+            val_acc=get_val_accuracy(impModel,enable_cuda)
             # pdb.set_trace()
             print 'Validation accuracy: %f'%(val_acc)
             running_accuracy=[]
