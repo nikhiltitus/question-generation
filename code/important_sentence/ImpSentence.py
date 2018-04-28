@@ -191,7 +191,7 @@ def get_val_accuracy(model):
 
 def main3():
     global input_file_path,Model_save_path,enable_cuda
-    enable_cuda=sys.argv[3]
+    enable_cuda=sys.argv[3] == 'TRUE'
     input_file_path=sys.argv[1]
     Model_save_path=sys.argv[2]
     running_accuracy=[]
