@@ -6,8 +6,8 @@ import torch.optim as optim
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import sys
 import pickle
-
-sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
+#Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
+sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
 from Paragraph import squad_data
 
 batch_count=0
@@ -46,7 +46,7 @@ def create_batches(batch_size):
             para_element.append(0)
         paragraph_list.append(element[0])
         para_sentence_lengths.append(element[1])
-        para_question_worthiness.append(element[2])
+        para_question_worthiness+=list(element[2])
         paragraph_line_length.append(element[3])
     print "MAX lengths : ",processed_data.max_par_length,processed_data.max_sent_length
     return paragraph_list,para_sentence_lengths,para_question_worthiness,paragraph_line_length
@@ -63,12 +63,12 @@ class ImpSentenceModel(nn.Module):
         self.mini_batch_size=mini_batch_size
         self.embedding_dim=embedding_dim
         self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
-        self.lstm=nn.LSTM(embedding_dim,hidden_dim)
+        self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True)
         self.hidden=self.init_hidden()
-        self.linear=nn.Linear(hidden_dim,2)
+        self.linear=nn.Linear(2*hidden_dim,2)
     
     def init_hidden(self):
-        self.hidden=(autograd.Variable(torch.zeros(1, self.mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(1, self.mini_batch_size, self.hidden_dim)))
+        self.hidden=(autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)))
 
     def forward(self,paragraph_variable,sentence_length_list,paragh_length_list):
         # pdb.set_trace()
@@ -99,10 +99,6 @@ class ImpSentenceModel(nn.Module):
         # pdb.set_trace()
 
 def main():
-    data=create_batches(15)
-    for element in data:
-        print element
-
     loss_function=nn.CrossEntropyLoss()
     target=torch.LongTensor([1,0,1,0,1,1])
     impModel=ImpSentenceModel(3,50,20,128,2)
@@ -122,5 +118,12 @@ def main():
         optimizer.step()
         # pdb.set_trace()
         print('Loss: ',loss.data)
+
+def main2():
+    p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
+    max_no_sentences,max_no_of_words=processed_data.max_sent_length,processed_data.max_par_length
+    pdb.set_trace()
+    p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
+    pdb.set_trace()
 
 main()
