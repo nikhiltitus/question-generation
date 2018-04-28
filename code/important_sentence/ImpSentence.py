@@ -38,7 +38,7 @@ def create_batches(batch_size,mode='train'):
         if batch_size==-1:
             return_data=processed_data.val_data
         else :
-            return_data=processed_data.val[:batch_size]
+            return_data=processed_data.val_data[:batch_size]
     else:
         if batch_size==-1:
             return_data=processed_data.test_data
@@ -224,9 +224,10 @@ def main4():
     print len(processed_data.val_data)
     #checking if all baches work well
     prev_count=0
-    while not batch_count!=(data_size):
+    while  batch_count>prev_count:
         print len(create_batches(100,'train')[0])
         print batch_count
         prev_count+=1
 
-main3(False)
+main4()
+#main3(False)
