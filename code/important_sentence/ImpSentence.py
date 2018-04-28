@@ -35,9 +35,15 @@ def create_batches(batch_size,mode='train'):
     if mode=='train':
         return_data=processed_data.train_data[batch_count*batch_size:(batch_count+1)*batch_size]
     elif mode=='val':
-        return_data=processed_data.val_data
+        if batch_size==-1:
+            return_data=processed_data.val_data
+        else :
+            return_data=processed_data.val[:batch_size]
     else:
-        return_data=processed_data.test_data
+        if batch_size==-1:
+            return_data=processed_data.test_data
+        else:
+            return_data=processed_data.test_data[:batch_size]
 
     data_batch=return_data
     sorted_data_batch=[]
@@ -210,6 +216,7 @@ def main3(enable_cuda=False):
         running_accuracy.append(accuracy)
 
 def main4():
+    global batch_count
     print len(create_batches(100,'train')[0])
     print len(create_batches(100,'test')[0])
     print len(create_batches(100,'val')[0])
@@ -217,5 +224,11 @@ def main4():
     print len(processed_data.train_data)
     print len(processed_data.test_data)
     print len(processed_data.val_data)
+    #checking if all baches work well
+    prev_count=0
+    while not batch_count!=(data_size):
+        print len(create_batches(100,'train')[0])
+        print batch_count
+        prev_count+=1
 
 main3(False)
