@@ -49,6 +49,7 @@ def create_batches(batch_size):
         para_question_worthiness+=list(element[2])
         paragraph_line_length.append(element[3])
     print "MAX lengths : ",processed_data.max_par_length,processed_data.max_sent_length
+    batch_count+=1
     return paragraph_list,para_sentence_lengths,para_question_worthiness,paragraph_line_length
         
 
@@ -63,6 +64,7 @@ class ImpSentenceModel(nn.Module):
         self.mini_batch_size=mini_batch_size
         self.embedding_dim=embedding_dim
         self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
+        self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
         self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True)
         self.hidden=self.init_hidden()
         self.linear=nn.Linear(2*hidden_dim,2)
@@ -126,4 +128,33 @@ def main2():
     p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
     pdb.set_trace()
 
-main()
+def main3():
+    no_of_epochs=10
+    epoch_count=0
+    loss_function=nn.CrossEntropyLoss()
+    p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
+    max_no_sentences,max_no_of_words=processed_data.max_sent_length,processed_data.max_par_length
+    impModel=ImpSentenceModel(128,300,48006,128,max_no_sentences)
+    optimizer = optim.SGD(impModel.parameters(), lr=0.1)
+    while True:
+        print batch_count
+        if batch_count == 1:
+            epoch_count+=1
+            print 'No of epoch: ',epoch_count
+        if epoch_count == no_of_epochs:
+            print 'Max epochs reached'
+            break
+        print ('Batch count is: %d of %d'%(batch_count,data_size//128))
+        paragraph_input=autograd.Variable(torch.LongTensor(p_list))
+        target_scores=autograd.Variable(torch.LongTensor(ques_worthy))
+        impModel.zero_grad()
+        impModel.init_hidden()
+        out_scores=impModel(paragraph_input,sentence_lens,n_line)
+        pdb.set_trace()
+        loss=loss_function(out_scores, autograd.Variable(target_scores))
+        loss.backward()
+        optimizer.step()
+        p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
+        print 'Loss: ',loss.data
+
+main3()
