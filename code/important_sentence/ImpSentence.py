@@ -85,7 +85,9 @@ class ImpSentenceModel(nn.Module):
         self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
         self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True)
         self.hidden=self.init_hidden()
-        self.linear=nn.Linear(2*hidden_dim,2)
+        self.relu_layer=nn.ReLU()
+        self.linear=nn.Linear(2*hidden_dim,100)
+        self.linear_2=nn.Linear(100,2)
     
     def init_hidden(self):
         self.hidden=(autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)))
@@ -114,7 +116,8 @@ class ImpSentenceModel(nn.Module):
             for j,element in enumerate(sentence_length_list[i]):
                 sentence_lstm[counter]=lstm_out[i,j]
                 counter+=1
-        output=self.linear(sentence_lstm)
+        output_1=self.relu_layer(self.linear(sentence_lstm))
+        output=self.linear_2(output_1)
         return output
         # pdb.set_trace()
 
