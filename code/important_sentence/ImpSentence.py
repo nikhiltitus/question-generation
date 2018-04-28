@@ -7,7 +7,8 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import sys
 import pickle
 #Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
-sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
+#sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
+sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
 from Paragraph import squad_data
 
 batch_count=0
@@ -18,7 +19,7 @@ def retrieve_data(file_location):
     with open(file_location) as file:
         processed_data=pickle.load(file)
 
-def create_batches(batch_size):
+def create_batches(batch_size,mode='train'):
     global processed_data,batch_count,data_size
     if not processed_data:
         print "Retrieving"
@@ -29,12 +30,20 @@ def create_batches(batch_size):
         batch_count=0
     
     # we take a batch of data
-    data_batch=processed_data.data[batch_count*batch_size:(batch_count+1)*batch_size]
+    if mode=='train':
+        return_data=processed_data.train_data[batch_count*batch_size:(batch_count+1)*batch_size]
+    elif mode=='val':
+        return_data=processed_data.val_data
+    else:
+        return_data=processed_data.test_data
+
+    data_batch=return_data
     sorted_data_batch=[]
     for i,para in enumerate(data_batch):
         
         sorted_data_batch.append((para.paragraph,para.sentence_lengths,
                             para.question_worthiness,len(para.sentence_lengths)))
+
     sorted_data_batch=sorted(sorted_data_batch,key=lambda tup:-tup[3])
     paragraph_list=[]
     para_sentence_lengths=[]
@@ -49,7 +58,8 @@ def create_batches(batch_size):
         para_question_worthiness+=list(element[2])
         paragraph_line_length.append(element[3])
     print "MAX lengths : ",processed_data.max_par_length,processed_data.max_sent_length
-    batch_count+=1
+    if mode=='train':
+        batch_count+=1
     return paragraph_list,para_sentence_lengths,para_question_worthiness,paragraph_line_length
         
 
@@ -157,4 +167,13 @@ def main3():
         p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
         print 'Loss: ',loss.data
 
-main3()
+def main4():
+    print len(create_batches(100,'train')[0])
+    print len(create_batches(100,'test')[0])
+    print len(create_batches(100,'val')[0])
+    print len(processed_data.data)
+    print len(processed_data.train_data)
+    print len(processed_data.test_data)
+    print len(processed_data.val_data)
+
+main4()
