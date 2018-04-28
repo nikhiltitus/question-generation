@@ -163,6 +163,7 @@ def get_val_accuracy(model,enable_cuda=False):
     model.zero_grad()
     model.init_hidden()
     out_scores=model(paragraph_input,val_sentence_lens,val_n_line)
+    pdb.set_trace()
     accuracy=get_accuracy(out_scores,target_scores)
     return out_scores
 
@@ -182,8 +183,8 @@ def main3(enable_cuda=False):
             torch.save(impModel, 'model.pt')
             epoch_count+=1
             print 'No of epoch: ',epoch_count
-            print 'Running training accuracy %d'%(sum(running_accuracy)/len(running_accuracy))
-            print 'Running Loss %d'%(sum(running_loss)/len(running_loss))
+            print 'Running training accuracy %f'%(sum(running_accuracy)/len(running_accuracy))
+            print 'Running Loss %f'%(sum(running_loss)/len(running_loss))
             print 'Validation accuracy: %d'%(get_val_accuracy(impModel))
             running_accuracy=[]
             running_loss=[]
@@ -211,6 +212,7 @@ def main3(enable_cuda=False):
         p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
         print 'Loss: ',loss.data
         print 'accuracy: ',accuracy
+        running_loss.append(float(loss.data.cpu()))
         running_accuracy.append(accuracy)
 
 def main4():
