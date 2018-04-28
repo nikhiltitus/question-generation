@@ -84,13 +84,17 @@ def create_batches(batch_size,mode='train'):
 #Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
 class ImpSentenceModel(nn.Module):
     def __init__(self,mini_batch_size,embedding_dim,vocab_size,hidden_dim,max_no_lines):
+        global enable_cuda
         super(ImpSentenceModel,self).__init__()
         self.max_no_lines=max_no_lines
         self.hidden_dim=hidden_dim
         self.mini_batch_size=mini_batch_size
         self.embedding_dim=embedding_dim
         self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
-        self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
+        if enable_cuda:
+            self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights).cuda())
+        else:
+            self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
         self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True)
         self.hidden=self.init_hidden()
         self.relu_layer=nn.ReLU()
