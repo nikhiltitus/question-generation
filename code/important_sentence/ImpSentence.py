@@ -11,6 +11,8 @@ import torch
 #Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
 #sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
 sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
+sys.path.append( '../')
+
 from Paragraph import squad_data
 
 batch_count=0
