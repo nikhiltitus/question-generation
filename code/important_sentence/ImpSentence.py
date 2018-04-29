@@ -256,5 +256,5 @@ def main4():
         print batch_count
         prev_count+=1
 
-main4()
-#main3()
+# main4()
+main3()
