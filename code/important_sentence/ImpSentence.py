@@ -21,7 +21,8 @@ from Paragraph import squad_data
 batch_count=0
 processed_data=None
 data_size=0
-input_file_path=None
+#input_file_path=None
+input_file_path='../../data/squad/text_sel_dump'
 Model_save_path=None
 enable_cuda=None
 
@@ -48,7 +49,7 @@ def create_batches(batch_size,mode='train'):
         if batch_size==-1:
             return_data=processed_data.val_data
         else :
-            return_data=processed_data.val_data[:batch_size]
+            return_data=np.random.choice(processed_data.val_data,batch_size,replace=False)
     else:
         if batch_size==-1:
             return_data=processed_data.test_data
@@ -255,5 +256,5 @@ def main4():
         print batch_count
         prev_count+=1
 
-# main4()
-main3()
+main4()
+#main3()
