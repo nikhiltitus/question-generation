@@ -12,6 +12,8 @@ import torch
 #sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
 sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
 sys.path.append( '../')
+sys.path.append('/home/nikhilgeorge/question-generation/code')
+
 
 from Paragraph import squad_data
 
@@ -190,6 +192,7 @@ def get_val_accuracy(model):
     return accuracy
 
 def main3():
+    print '----------PROGRAM STARTING------------------------'
     global input_file_path,Model_save_path,enable_cuda
     enable_cuda=sys.argv[3] == 'TRUE'
     input_file_path=sys.argv[1]
@@ -214,7 +217,7 @@ def main3():
             print 'No of epoch: ',epoch_count
             print 'Running training accuracy %f'%(sum(running_accuracy)/len(running_accuracy))
             print 'Running Loss %f'%(sum(running_loss)/len(running_loss))
-            val_acc=get_val_accuracy(impModel,enable_cuda)
+            val_acc=get_val_accuracy(impModel)
             # pdb.set_trace()
             print 'Validation accuracy: %f'%(val_acc)
             running_accuracy=[]
