@@ -98,7 +98,10 @@ class ImpSentenceModel(nn.Module):
         else:
             self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
             self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
-        self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True)
+        if enable_cuda:
+            self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True).cuda()
+        else:
+            self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True).cuda()
         self.hidden=self.init_hidden()
         self.relu_layer=nn.ReLU()
         self.linear=nn.Linear(2*hidden_dim,100)
@@ -174,6 +177,8 @@ def main3():
     print '----------PROGRAM STARTING------------------------'
     global input_file_path,Model_save_path,enable_cuda
     enable_cuda=sys.argv[3] == 'TRUE'
+    if enable_cuda:
+        print 'CUDA enabled'
     input_file_path=sys.argv[1]
     Model_save_path=sys.argv[2]
     running_accuracy=[]
