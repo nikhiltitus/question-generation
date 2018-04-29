@@ -159,7 +159,7 @@ class ImpSentenceModel(nn.Module):
 
 
 def get_accuracy(out_scores,target_scores):
-    return np.mean(np.argmax(out_scores.data.cpu().numpy(),axis=1) == target_scores.data.numpy())
+    return np.mean(np.argmax(out_scores.data.cpu().numpy(),axis=1) == target_scores.data.cpu().numpy())
 
 def get_val_accuracy(model):
     global enable_cuda
