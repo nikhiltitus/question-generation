@@ -103,7 +103,7 @@ class ImpSentenceModel(nn.Module):
         else:
             self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True).cuda()
         if enable_cuda:
-            self.hidden=self.init_hidden().cuda()
+            self.hidden=self.init_hidden()
             self.relu_layer=nn.ReLU().cuda()
             self.linear=nn.Linear(2*hidden_dim,100).cuda()
             self.linear_2=nn.Linear(100,2).cuda()
