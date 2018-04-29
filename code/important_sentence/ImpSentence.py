@@ -105,7 +105,11 @@ class ImpSentenceModel(nn.Module):
         self.linear_2=nn.Linear(100,2)
     
     def init_hidden(self):
-        self.hidden=(autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)))
+        global enable_cuda
+        if enable_cuda:
+            self.hidden=(autograd.Variable(torch.cuda.FloatTensor(2, self.mini_batch_size, self.hidden_dim).fill_(0)),autograd.Variable(torch.cuda.FloatTensor(2, self.mini_batch_size, self.hidden_dim).fill_(0)))
+        else:
+            self.hidden=(autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)))
 
     def forward(self,paragraph_variable,sentence_length_list,paragh_length_list):
         # pdb.set_trace()
