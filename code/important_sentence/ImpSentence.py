@@ -189,7 +189,7 @@ def main3():
     Model_save_path=sys.argv[2]
     running_accuracy=[]
     running_loss=[]
-    no_of_epochs=10
+    no_of_epochs=20
     epoch_count=0
     loss_function=nn.CrossEntropyLoss()
     p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
