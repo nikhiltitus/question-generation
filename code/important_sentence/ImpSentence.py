@@ -107,12 +107,16 @@ class ImpSentenceModel(nn.Module):
             self.hidden=self.init_hidden()
             self.relu_layer=nn.ReLU().cuda()
             self.linear=nn.Linear(2*hidden_dim,100).cuda()
-            self.linear_2=nn.Linear(100,2).cuda()
+            self.linear_2=nn.Linear(100,50).cuda()
+            self.relu_layer_2=nn.ReLU().cuda()
+            self.linear_3=nn.Linear(50,2).cuda()
         else:    
             self.hidden=self.init_hidden()
             self.relu_layer=nn.ReLU()
             self.linear=nn.Linear(2*hidden_dim,100)
-            self.linear_2=nn.Linear(100,2)
+            self.linear_2=nn.Linear(100,50)
+            self.relu_layer_2=nn.ReLU()
+            self.linear_3=nn.Linear(50,2)
     
     def init_hidden(self):
         global enable_cuda
@@ -154,7 +158,8 @@ class ImpSentenceModel(nn.Module):
                 sentence_lstm[counter]=lstm_out[i,j]
                 counter+=1
         output_1=self.relu_layer(self.linear(sentence_lstm))
-        output=self.linear_2(output_1)
+        output_2=self.relu_layer_2(self.linear_2(output_1))
+        output=self.linear_3(output_2)
         return output
         # pdb.set_trace()
 
