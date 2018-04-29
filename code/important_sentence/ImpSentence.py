@@ -107,6 +107,7 @@ class ImpSentenceModel(nn.Module):
     def init_hidden(self):
         global enable_cuda
         if enable_cuda:
+            print 'In init hidden'
             self.hidden=(autograd.Variable(torch.cuda.FloatTensor(2, self.mini_batch_size, self.hidden_dim).fill_(0)),autograd.Variable(torch.cuda.FloatTensor(2, self.mini_batch_size, self.hidden_dim).fill_(0)))
         else:
             self.hidden=(autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)))
