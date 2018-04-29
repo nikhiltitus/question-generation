@@ -92,10 +92,11 @@ class ImpSentenceModel(nn.Module):
         self.hidden_dim=hidden_dim
         self.mini_batch_size=mini_batch_size
         self.embedding_dim=embedding_dim
-        self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
         if enable_cuda:
+            self.embedding_layer=nn.Embedding(vocab_size,embedding_dim).cuda()
             self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights).cuda())
         else:
+            self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
             self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
         self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True)
         self.hidden=self.init_hidden()
@@ -142,33 +143,6 @@ class ImpSentenceModel(nn.Module):
         return output
         # pdb.set_trace()
 
-def main():
-    loss_function=nn.CrossEntropyLoss()
-    target=torch.LongTensor([1,0,1,0,1,1])
-    impModel=ImpSentenceModel(3,50,20,128,2)
-    optimizer = optim.SGD(impModel.parameters(), lr=0.1)
-    inp_tensor=torch.LongTensor([ [1,2,3,4,5,6],[7,8,9,10,11,12],[13,14,15,16,17,18] ])
-    # impModel(autograd.Variable(inp_tensor),[[2,4],[5,1],[1,5]],[2,2,2])
-    print '-------IN--------------'
-    for epoch in range(10):
-        impModel.zero_grad()
-        impModel.init_hidden()
-        out_scores=impModel(autograd.Variable(inp_tensor),[[2,4],[5,1],[1,5]],[2,2,2])
-        # pdb.set_trace()
-        loss=loss_function(out_scores, autograd.Variable(target))
-        # pdb.set_trace()
-        loss.backward()
-        # pdb.set_trace()
-        optimizer.step()
-        # pdb.set_trace()
-        print('Loss: ',loss.data)
-
-def main2():
-    p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
-    max_no_sentences,max_no_of_words=processed_data.max_sent_length,processed_data.max_par_length
-    pdb.set_trace()
-    p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
-    pdb.set_trace()
 
 def get_accuracy(out_scores,target_scores):
     return np.mean(np.argmax(out_scores.data.cpu().numpy(),axis=1) == target_scores.data.numpy())
