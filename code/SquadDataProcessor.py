@@ -130,15 +130,15 @@ def process_and_save_for_nmt(file_location,dest_folder):
 
 
 if __name__=='__main__':
-        parser=OptionParser()
-        parser.add_option('-i','--input',default='../data/squad/train-v1.1.json',dest='input_location',help='input squad json location')
-        parser.add_option('-o','--output',default='../out/',dest='output_location',help='output folder location')
-        parser.add_option("-m", "--mode", default='2',dest='mode' ,help="mode 1 for training nmt model, mode 2 for text selection model [default: %default]")
-        options, args = parser.parse_args()
-        if options.mode == '1':
-            print 'Preprocessing squad for Open NMT'
-            process_and_save_for_nmt(options.input_location,options.output_location)
-        elif options.mode == '2':
-            print 'Preprocessing for the text selection model'
-            preprocess_and_save_text_selection(options.input_location,options.output_location,remove_nonoverlap=True)
+    parser=OptionParser()
+    parser.add_option('-i','--input',default='../data/squad/train-v1.1.json',dest='input_location',help='input squad json location')
+    parser.add_option('-o','--output',default='../out/',dest='output_location',help='output folder location')
+    parser.add_option("-m", "--mode", default='2',dest='mode' ,help="mode 1 for training nmt model, mode 2 for text selection model [default: %default]")
+    options, args = parser.parse_args()
+    if options.mode == '1':
+        print 'Preprocessing squad for Open NMT'
+        process_and_save_for_nmt(options.input_location,options.output_location)
+    elif options.mode == '2':
+        print 'Preprocessing for the text selection model'
+        preprocess_and_save_text_selection(options.input_location,options.output_location,remove_nonoverlap=True)
 
