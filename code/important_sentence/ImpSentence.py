@@ -84,67 +84,52 @@ def create_batches(batch_size,mode='train'):
 
 
 
-#Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
+
 class ImpSentenceModel(nn.Module):
     def __init__(self,mini_batch_size,embedding_dim,vocab_size,hidden_dim,max_no_lines):
         global enable_cuda
         super(ImpSentenceModel,self).__init__()
         self.max_no_lines=max_no_lines
         self.hidden_dim=hidden_dim
-        self.mini_batch_size=mini_batch_size
         self.embedding_dim=embedding_dim
-        if enable_cuda:
-            self.embedding_layer=nn.Embedding(vocab_size,embedding_dim).cuda()
-            self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights).cuda())
-        else:
-            self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
-            self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
-        if enable_cuda:
-            self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True).cuda()
-        else:
-            self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True).cuda()
-        if enable_cuda:
-            self.hidden=self.init_hidden()
-            self.relu_layer=nn.ReLU().cuda()
-            self.linear=nn.Linear(2*hidden_dim,100).cuda()
-            self.linear_2=nn.Linear(100,50).cuda()
-            self.relu_layer_2=nn.ReLU().cuda()
-            self.linear_3=nn.Linear(50,2).cuda()
-        else:    
-            self.hidden=self.init_hidden()
-            self.relu_layer=nn.ReLU()
-            self.linear=nn.Linear(2*hidden_dim,100)
-            self.linear_2=nn.Linear(100,50)
-            self.relu_layer_2=nn.ReLU()
-            self.linear_3=nn.Linear(50,2)
+        self.embedding_layer=nn.Embedding(vocab_size,embedding_dim)
+        self.embedding_layer.weight.data.copy_(torch.from_numpy(processed_data.weights))
+        self.lstm=nn.LSTM(embedding_dim,hidden_dim,bidirectional=True)
+        self.hidden=self.init_hidden(mini_batch_size)
+        self.relu_layer=nn.ReLU()
+        self.linear=nn.Linear(2*hidden_dim,100)
+        self.linear_2=nn.Linear(100,50)
+        self.relu_layer_2=nn.ReLU()
+        self.linear_3=nn.Linear(50,2)
     
-    def init_hidden(self):
+    def init_hidden(self,mini_batch_size):
         global enable_cuda
         if enable_cuda:
             print 'In init hidden'
-            self.hidden=(autograd.Variable(torch.cuda.FloatTensor(2, self.mini_batch_size, self.hidden_dim).fill_(0)),autograd.Variable(torch.cuda.FloatTensor(2, self.mini_batch_size, self.hidden_dim).fill_(0)))
+            self.hidden=(autograd.Variable(torch.cuda.FloatTensor(2, mini_batch_size, self.hidden_dim).fill_(0)),autograd.Variable(torch.cuda.FloatTensor(2, mini_batch_size, self.hidden_dim).fill_(0)))
         else:
-            self.hidden=(autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(2, self.mini_batch_size, self.hidden_dim)))
+            self.hidden=(autograd.Variable(torch.zeros(2, mini_batch_size, self.hidden_dim)),autograd.Variable(torch.zeros(2, mini_batch_size, self.hidden_dim)))
 
-    def forward(self,paragraph_variable,sentence_length_list,paragh_length_list):
+    def forward(self,mini_batch_size,paragraph_variable,sentence_lens,no_of_lines):
         # pdb.set_trace()
+        self.init_hidden(mini_batch_size)
         global enable_cuda
         no_of_sentence=0
         embedding=self.embedding_layer(paragraph_variable)
         if enable_cuda:
-            line_embedding=autograd.Variable(torch.cuda.FloatTensor(self.mini_batch_size,self.max_no_lines,self.embedding_dim).fill_(0))
+            line_embedding=autograd.Variable(torch.cuda.FloatTensor(mini_batch_size,self.max_no_lines,self.embedding_dim).fill_(0))
         else:
-            line_embedding=autograd.Variable(torch.zeros(self.mini_batch_size,self.max_no_lines,self.embedding_dim))
-        for i in range(0,self.mini_batch_size):
+            line_embedding=autograd.Variable(torch.zeros(mini_batch_size,self.max_no_lines,self.embedding_dim))
+        for i in range(0,mini_batch_size):
             counter=0
             previous=0
-            for j in sentence_length_list[i]:
+            for j in sentence_lens[i]:
                 no_of_sentence+=1
                 line_embedding[i,counter]=embedding[i,previous: previous + j].sum(dim=0)
                 counter+=1
                 previous+=j
         line_embedding=line_embedding.transpose(0,1)
-        line_embedding=pack_padded_sequence(line_embedding,paragh_length_list)
+        line_embedding=pack_padded_sequence(line_embedding,no_of_lines)
         packed_lstm_out,self.hidden=self.lstm(line_embedding,self.hidden)
         lstm_out, _ = pad_packed_sequence(packed_lstm_out)
         lstm_out=lstm_out.transpose(0,1)
@@ -153,8 +138,8 @@ class ImpSentenceModel(nn.Module):
         else:
             sentence_lstm=autograd.Variable(torch.zeros(no_of_sentence,lstm_out.shape[2]))
         counter=0
-        for i in range(0,self.mini_batch_size):
-            for j,element in enumerate(sentence_length_list[i]):
+        for i in range(0,mini_batch_size):
+            for j,element in enumerate(sentence_lens[i]):
                 sentence_lstm[counter]=lstm_out[i,j]
                 counter+=1
         output_1=self.relu_layer(self.linear(sentence_lstm))
@@ -180,12 +165,12 @@ def get_val_accuracy(model):
     else:
         target_scores=autograd.Variable(torch.LongTensor(val_ques_worthy))
     model.zero_grad()
-    model.init_hidden()
     out_scores=model(paragraph_input,val_sentence_lens,val_n_line)
     accuracy=get_accuracy(out_scores,target_scores)
     return accuracy
 
 def main3():
+    MINI_BATCH_SIZE=128
     print '----------PROGRAM STARTING------------------------'
     global input_file_path,Model_save_path,enable_cuda
     enable_cuda=sys.argv[3] == 'TRUE'
@@ -193,14 +178,15 @@ def main3():
         print 'CUDA enabled'
     input_file_path=sys.argv[1]
     Model_save_path=sys.argv[2]
-    running_accuracy=[]
-    running_loss=[]
-    no_of_epochs=20
-    epoch_count=0
+    running_accuracy,running_loss=[],[]
+    no_of_epochs,epoch_count=20,0
     loss_function=nn.CrossEntropyLoss()
     p_list,sentence_lens,ques_worthy,n_line=create_batches(128)
     max_no_sentences,max_no_of_words=processed_data.max_sent_length,processed_data.max_par_length
-    impModel=ImpSentenceModel(128,300,48006,128,max_no_sentences)
+    if enable_cuda:
+        impModel=ImpSentenceModel(MINI_BATCH_SIZE,300,48006,128,max_no_sentences).cuda()
+    else:
+        impModel=ImpSentenceModel(MINI_BATCH_SIZE,300,48006,128,max_no_sentences)
     optimizer = optim.SGD(impModel.parameters(), lr=0.1)
     while True:
         print batch_count
@@ -232,8 +218,7 @@ def main3():
         else:
             target_scores=autograd.Variable(torch.LongTensor(ques_worthy))
         impModel.zero_grad()
-        impModel.init_hidden()
-        out_scores=impModel(paragraph_input,sentence_lens,n_line)
+        out_scores=impModel(MINI_BATCH_SIZE,paragraph_input,sentence_lens,n_line)
         accuracy=get_accuracy(out_scores,target_scores)
         # pdb.set_trace()
         loss=loss_function(out_scores, autograd.Variable(target_scores))
