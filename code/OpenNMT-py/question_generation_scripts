@@ -30,5 +30,13 @@ python /home/nikhilgeorge/OpenNMT-py/train.py -data=/home/nikhilgeorge/OpenNMT-p
 -pre_word_vecs_enc "/home/nikhilgeorge/OpenNMT-py/qg/embeddings.enc.pt" \
 -pre_word_vecs_dec "/home/nikhilgeorge/OpenNMT-py/qg/embeddings.dec.pt" 
 
+python /home/nikhilgeorge/OpenNMT-py/translate.py \
+-model /home/nikhilgeorge/OpenNMT-py/model/qgmodel_acc_39.18_ppl_48.35_e15.pt \
+-src /home/nikhilgeorge/question-generation/out/test-src.txt \
+-tgt /home/nikhilgeorge/question-generation/out/test-tgt.txt \
+-replace_unk \
+-output /home/nikhilgeorge/question-generation/out/qg.test.pred.atok \
+-beam_size 3
+
 
 
