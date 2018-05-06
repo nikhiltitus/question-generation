@@ -190,7 +190,7 @@ def main3():
             print 'Batch size issue'
             continue
         if batch_count == 1 and len(running_loss) != 0:
-            torch.save(impModel, Model_save_path)
+            torch.save(impModel.cuda(), Model_save_path)
             epoch_count+=1
             print 'No of epoch: ',epoch_count
             print 'Running training accuracy %f'%(sum(running_accuracy)/len(running_accuracy))
