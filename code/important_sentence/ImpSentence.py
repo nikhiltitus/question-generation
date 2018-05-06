@@ -163,7 +163,7 @@ def get_val_accuracy(model):
     else:
         target_scores=autograd.Variable(torch.LongTensor(val_ques_worthy))
     model.zero_grad()
-    out_scores=model(paragraph_input,val_sentence_lens,val_n_line)
+    out_scores=model(128,paragraph_input,val_sentence_lens,val_n_line)
     accuracy=get_accuracy(out_scores,target_scores)
     return accuracy
 
@@ -195,7 +195,6 @@ def write_results_as_text(p_list,sentence_lens,no_of_lines,out,output_location):
                 questions.append(text_par[i][j])
             counter+=1
         ques_par.append(questions)
-    pdb.set_trace()
     with open(output_location+'paragraphs','w') as parafile:
         with open(output_location+'worthy_sentences','w') as worthyfile:
             counter=0
@@ -203,9 +202,14 @@ def write_results_as_text(p_list,sentence_lens,no_of_lines,out,output_location):
                 sentence=' '
                 for j in range(0,len(text_par[i])):
                     sentence=sentence+' '.join(text_par[i][j])
-                # pdb.set_trace()
                 parafile.write(str(counter)+'|'+str(len(ques_par[i]))+'|'+sentence+'\n')
                 counter+=1
+            for i in range(0,len(ques_par)):
+                for j in range(0,len(ques_par[i])):
+                    sentence=' '.join(ques_par[i][j])
+                    worthyfile.write(sentence+'\n')
+    print 'File writes complete'
+    pdb.set_trace()
 def main3():
     MINI_BATCH_SIZE=128
     print '----------PROGRAM STARTING------------------------'
@@ -287,7 +291,6 @@ def main4():
     output_location=sys.argv[4]
     p_list,sentence_lens,ques_worthy,n_line=create_batches(-1,'val')
     write_results_as_text(p_list,sentence_lens,n_line,np.random.randint(2,size=10277),output_location)
-    pdb.set_trace()
     impModel=torch.load(model_load_path, map_location=lambda storage, loc: storage)
     impModel=impModel.cuda()
     impModel.zero_grad()
@@ -301,5 +304,5 @@ def main4():
     accuracy=get_accuracy(out_scores,target_scores)
     print accuracy
 
-# main4()
-main3()
+main4()
+# main3()
