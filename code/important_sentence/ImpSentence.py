@@ -8,8 +8,6 @@ import sys
 import pickle
 import numpy as np
 import torch
-#Before running export PYTHONPATH=/Users/nikhiltitus/acads/anlp/project/question-generation/code:/Users/nikhiltitus/acads/anlp/project/question-generation/code/important_sentence
-#sys.path.append( '/Users/nikhiltitus/acads/anlp/project/question-generation/code')
 sys.path.append( '/media/albert/Albert Bonu/Studies/CS 690N/Project/work/question-generation/code')
 sys.path.append( '../')
 sys.path.append('/home/nikhilgeorge/question-generation/code')
@@ -22,7 +20,6 @@ batch_count=0
 processed_data=None
 data_size=0
 #input_file_path=None
-input_file_path='../../data/squad/text_sel_dump'
 Model_save_path=None
 enable_cuda=None
 
@@ -41,7 +38,7 @@ def create_batches(batch_size,mode='train'):
     max_count=data_size//batch_size
     if not batch_count<max_count:
         batch_count=0
-    
+    pdb.set_trace()
     # we take a batch of data
     if mode=='train':
         return_data=processed_data.train_data[batch_count*batch_size:(batch_count+1)*batch_size]
@@ -230,7 +227,7 @@ def main3():
         running_loss.append(float(loss.data.cpu()))
         running_accuracy.append(accuracy)
 
-def main4():
+def test_inputs():
     global batch_count
     print len(create_batches(100,'train')[0])
     print len(create_batches(100,'test')[0])
@@ -245,6 +242,22 @@ def main4():
         print len(create_batches(100,'train')[0])
         print batch_count
         prev_count+=1
+
+def main4():
+    input_file_path=sys.argv[1]
+    model_load_path=sys.argv[2]
+    enable_cuda=sys.argv[3]
+    p_list,sentence_lens,ques_worthy,n_line=create_batches(-1,'val')
+    pdb.set_trace()
+    impModel=torch.load(model_load_path)
+    impModel.zero_grad()
+    if enable_cuda:
+        paragraph_input=autograd.Variable(torch.cuda.LongTensor(p_list))
+    else:
+        paragraph_input=autograd.Variable(torch.LongTensor(p_list))
+    out_scores=impModel(len(p_list),paragraph_input,sentence_lens,n_line)
+    accuracy=get_accuracy(out_scores,target_scores)
+    print accuracy
 
 # main4()
 main3()
