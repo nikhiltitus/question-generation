@@ -209,7 +209,7 @@ def write_results_as_text(p_list,sentence_lens,no_of_lines,out,output_location):
                     sentence=' '.join(ques_par[i][j])
                     worthyfile.write(sentence+'\n')
     print 'File writes complete'
-    pdb.set_trace()
+    
 def main3():
     MINI_BATCH_SIZE=128
     print '----------PROGRAM STARTING------------------------'
@@ -290,7 +290,6 @@ def main4():
     enable_cuda=sys.argv[3]
     output_location=sys.argv[4]
     p_list,sentence_lens,ques_worthy,n_line=create_batches(-1,'val')
-    write_results_as_text(p_list,sentence_lens,n_line,np.random.randint(2,size=10277),output_location)
     impModel=torch.load(model_load_path, map_location=lambda storage, loc: storage)
     impModel=impModel.cuda()
     impModel.zero_grad()
@@ -303,6 +302,9 @@ def main4():
     out_scores=impModel(len(p_list),paragraph_input,sentence_lens,n_line)
     accuracy=get_accuracy(out_scores,target_scores)
     print accuracy
+    output=np.argmax(out_scores.data.cpu().numpy(),axis=1)
+    pdb.set_trace()
+    write_results_as_text(p_list,sentence_lens,n_line,output,output_location)
 
 # main4()
 main3()
