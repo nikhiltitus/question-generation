@@ -12,12 +12,19 @@ def get_questions(question_file_location):
         questions=ques_file.readlines()
     return questions
 
+def write_output(para_question_list,output_location):
+    with open(output_location,'w') as output_file:
+        for i in range(0,len(para_question_list)):
+            output_file.write('Paragraph: '+str(i)+'\n')
+            for question in para_question_list[i]:
+                output_file.write(question)+'\n'
+
 def main():
     parser=OptionParser()
-    parser.add_option('--para_file',dest='para_file',help='The paragraph file')
-    parser.add_option('--question_file',dest='question_file',help='The question file')
+    parser.add_option('--para_file',dest='para_file',help='paragraph file location')
+    parser.add_option('--question_file',dest='question_file',help='question file location')
+    parser.add_option('--output_file',dest='output_file',help='output file location')
     options,args=parser.parse_args()
-    pdb.set_trace()
     no_of_questions=get_no_questions(options.para_file)#List of numbers
     questions=get_questions(options.question_file)#List of questions
     para_question_list=[]
@@ -25,4 +32,7 @@ def main():
     for i in range(0,len(no_of_questions)):
         para_question_list.append(questions[index:index+no_of_questions[i]])
         index+=no_of_questions[i]
-    pdb.set_trace()
+    write_output(para_question_list,options.output_file)
+    
+
+main()
