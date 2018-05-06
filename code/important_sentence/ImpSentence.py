@@ -304,5 +304,5 @@ def main4():
     accuracy=get_accuracy(out_scores,target_scores)
     print accuracy
 
-main4()
-# main3()
+# main4()
+main3()
