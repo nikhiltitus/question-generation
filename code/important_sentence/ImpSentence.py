@@ -190,7 +190,7 @@ def main3():
             print 'Batch size issue'
             continue
         if batch_count == 1 and len(running_loss) != 0:
-            torch.save(impModel.cuda(), Model_save_path)
+            torch.save(impModel, Model_save_path)
             epoch_count+=1
             print 'No of epoch: ',epoch_count
             print 'Running training accuracy %f'%(sum(running_accuracy)/len(running_accuracy))
@@ -208,7 +208,6 @@ def main3():
             paragraph_input=autograd.Variable(torch.cuda.LongTensor(p_list))
         else:
             paragraph_input=autograd.Variable(torch.LongTensor(p_list))
-        # paragraph_input=autograd.Variable(torch.LongTensor(p_list))
         if enable_cuda:
             target_scores=autograd.Variable(torch.cuda.LongTensor(ques_worthy))
         else:
@@ -216,7 +215,6 @@ def main3():
         impModel.zero_grad()
         out_scores=impModel(MINI_BATCH_SIZE,paragraph_input,sentence_lens,n_line)
         accuracy=get_accuracy(out_scores,target_scores)
-        # pdb.set_trace()
         loss=loss_function(out_scores, autograd.Variable(target_scores))
         loss.backward()
         optimizer.step()
