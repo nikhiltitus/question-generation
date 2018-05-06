@@ -206,11 +206,9 @@ def main3():
         print ('Batch count is: %d of %d'%(batch_count,data_size//128))
         if enable_cuda:
             paragraph_input=autograd.Variable(torch.cuda.LongTensor(p_list))
-        else:
-            paragraph_input=autograd.Variable(torch.LongTensor(p_list))
-        if enable_cuda:
             target_scores=autograd.Variable(torch.cuda.LongTensor(ques_worthy))
         else:
+            paragraph_input=autograd.Variable(torch.LongTensor(p_list))
             target_scores=autograd.Variable(torch.LongTensor(ques_worthy))
         impModel.zero_grad()
         out_scores=impModel(MINI_BATCH_SIZE,paragraph_input,sentence_lens,n_line)
@@ -241,21 +239,24 @@ def test_inputs():
         prev_count+=1
 
 def main4():
-    global input_file_path
+    global input_file_path,enable_cuda
     input_file_path=sys.argv[1]
     model_load_path=sys.argv[2]
     enable_cuda=sys.argv[3]
     p_list,sentence_lens,ques_worthy,n_line=create_batches(-1,'val')
     pdb.set_trace()
-    impModel=torch.load(model_load_path)
+    impModel=torch.load(model_load_path, map_location=lambda storage, loc: storage)
+    impModel=impModel.cuda()
     impModel.zero_grad()
     if enable_cuda:
         paragraph_input=autograd.Variable(torch.cuda.LongTensor(p_list))
+        target_scores=autograd.Variable(torch.cuda.LongTensor(ques_worthy))
     else:
         paragraph_input=autograd.Variable(torch.LongTensor(p_list))
+        target_scores=autograd.Variable(torch.LongTensor(ques_worthy))
     out_scores=impModel(len(p_list),paragraph_input,sentence_lens,n_line)
     accuracy=get_accuracy(out_scores,target_scores)
     print accuracy
 
-# main4()
-main3()
+main4()
+# main3()
