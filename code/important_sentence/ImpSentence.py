@@ -22,6 +22,7 @@ data_size=0
 #input_file_path=None
 Model_save_path=None
 enable_cuda=None
+index_to_word=None
 
 
 def retrieve_data(file_location):
@@ -30,7 +31,7 @@ def retrieve_data(file_location):
         processed_data=pickle.load(file)
 
 def create_batches(batch_size,mode='train'):
-    global processed_data,batch_count,data_size
+    global processed_data,batch_count,data_size,index_to_word
     if not processed_data:
         print "Retrieving"
         retrieve_data(input_file_path)
@@ -39,6 +40,7 @@ def create_batches(batch_size,mode='train'):
     if not batch_count<max_count:
         batch_count=0
     # we take a batch of data
+    index_to_word=processed_data.index2word
     if mode=='train':
         return_data=processed_data.train_data[batch_count*batch_size:(batch_count+1)*batch_size]
     elif mode=='val':
@@ -165,6 +167,45 @@ def get_val_accuracy(model):
     accuracy=get_accuracy(out_scores,target_scores)
     return accuracy
 
+def write_results_as_text(p_list,sentence_lens,no_of_lines,out,output_location):
+    global index_to_word
+    text_par=[]
+    text_lines=[]
+    par_lines=[]
+    count=0
+    for i in range(0,len(p_list)):
+        index=0
+        par_lines=[]
+        for j in sentence_lens[i]:
+            line=p_list[i][index:index+j]
+            text_lines=[index_to_word[it] for it in line]
+            par_lines.append(text_lines)
+            index+=j
+            count+=1
+        text_par.append(par_lines)
+    print count
+    #Questions mapped to corresponding paragraphs
+    counter=0
+    ques_par=[]
+    for i in range(0,len(no_of_lines)):
+        questions=[]
+        for j in range(0,no_of_lines[i]):
+            print counter
+            if out[counter]==1:
+                questions.append(text_par[i][j])
+            counter+=1
+        ques_par.append(questions)
+    pdb.set_trace()
+    with open(output_location+'paragraphs','w') as parafile:
+        with open(output_location+'worthy_sentences','w') as worthyfile:
+            counter=0
+            for i in range (0,len(text_par)):
+                sentence=' '
+                for j in range(0,len(text_par[i])):
+                    sentence=sentence+' '.join(text_par[i][j])
+                # pdb.set_trace()
+                parafile.write(str(counter)+'|'+str(len(ques_par[i]))+'|'+sentence+'\n')
+                counter+=1
 def main3():
     MINI_BATCH_SIZE=128
     print '----------PROGRAM STARTING------------------------'
@@ -243,7 +284,9 @@ def main4():
     input_file_path=sys.argv[1]
     model_load_path=sys.argv[2]
     enable_cuda=sys.argv[3]
+    output_location=sys.argv[4]
     p_list,sentence_lens,ques_worthy,n_line=create_batches(-1,'val')
+    write_results_as_text(p_list,sentence_lens,n_line,np.random.randint(2,size=10277),output_location)
     pdb.set_trace()
     impModel=torch.load(model_load_path, map_location=lambda storage, loc: storage)
     impModel=impModel.cuda()
@@ -258,5 +301,5 @@ def main4():
     accuracy=get_accuracy(out_scores,target_scores)
     print accuracy
 
-main4()
-# main3()
+# main4()
+main3()
