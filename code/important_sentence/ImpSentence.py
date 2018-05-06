@@ -38,7 +38,6 @@ def create_batches(batch_size,mode='train'):
     max_count=data_size//batch_size
     if not batch_count<max_count:
         batch_count=0
-    pdb.set_trace()
     # we take a batch of data
     if mode=='train':
         return_data=processed_data.train_data[batch_count*batch_size:(batch_count+1)*batch_size]
@@ -244,6 +243,7 @@ def test_inputs():
         prev_count+=1
 
 def main4():
+    global input_file_path
     input_file_path=sys.argv[1]
     model_load_path=sys.argv[2]
     enable_cuda=sys.argv[3]
