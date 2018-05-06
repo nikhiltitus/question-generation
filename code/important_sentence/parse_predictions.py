@@ -17,7 +17,7 @@ def write_output(para_question_list,output_location):
         for i in range(0,len(para_question_list)):
             output_file.write('Paragraph: '+str(i)+'\n')
             for question in para_question_list[i]:
-                output_file.write(question)+'\n'
+                output_file.write(question)
 
 def main():
     parser=OptionParser()
